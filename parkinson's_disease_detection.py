@@ -1,5 +1,4 @@
-"""### Importing the required Libraries and packages"""
-
+# Importing the required Libraries and packages
 import numpy as np
 import cv2
 from tensorflow.keras.layers import Input, Conv2D, BatchNormalization, Dropout, Flatten, Dense, MaxPool2D
@@ -18,8 +17,7 @@ from tensorflow.keras.regularizers import l2
 import tensorflow as tf
 import pandas as pd
 
-"""### Loading Dataset"""
-
+# Loading Dataset
 data_train = np.load('dataset/train_set.npz', allow_pickle=True)
 x_train = data_train['arr_0']
 y_train = data_train['arr_1']
@@ -34,23 +32,19 @@ y_test = data_test['arr_1']
 print(x_test.shape)
 print(y_test.shape)
 
-"""### Data Distribution"""
-
+# Data Distribution of Train Set
 unique_train, count = np.unique(y_train, return_counts=True)
 plt.figure(figsize=(20, 10))
 sns.barplot(unique_train, count).set_title("Number of training images per category:")
 plt.show()
 
+# Data Distribution of Test Set
 unique_test, count_test = np.unique(y_test, return_counts=True)
 plt.figure(figsize=(20, 10))
 sns.barplot(unique_test, count_test).set_title("Number of testing images per category:")
 plt.show()
 
-"""As can be seen, though the dataset is balanced but contains very less data points
-
-### Augmenting the Dataset
-"""
-
+# Augmenting the Dataset
 train_data_generator = ImageDataGenerator(rotation_range=360, 
                                     width_shift_range=0.0, 
                                     height_shift_range=0.0, 
@@ -109,12 +103,8 @@ y_test = y + y_aug_test
 print(len(x_test))
 print(len(y_test))
 
-"""### Visualizing the Images in Train and Test Set
-
-##### Images in Train Set
-"""
-
-# print(y_test)
+# Visualizing the Images in Train and Test Set
+# Images in Train Set
 figure1 = plt.figure(figsize=(5, 5))
 idx_healthy = [i for (i, v) in enumerate(y_train) if v=='healthy']
 img_healthy = x_train[idx_healthy[-1]]
@@ -131,8 +121,7 @@ plt.title("Spiral Drawing by a Person having Parkinson's Disease")
 plt.axis('off')
 plt.show()
 
-"""#### Images in Test Set"""
-
+# Images in Test Set
 figure1 = plt.figure(figsize=(5, 5))
 idx_healthy = [i for (i, v) in enumerate(y_test) if v=='healthy']
 img_healthy = x_test[idx_healthy[-1]]
@@ -149,26 +138,27 @@ plt.title("Spiral Drawing by a Person having Parkinson's Disease")
 plt.axis('off')
 plt.show()
 
-"""### Preprocessing the Images"""
-
+# Preprocessing the Images
 for i in range(len(x_train)):
     img = x_train[i]
-    img = cv2.resize(img, (128, 128))
+    img = cv2.resize(img, (128, 128))  # changing the size of images to (128, 128)
     img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     x_train[i] = img
     
 for i in range(len(x_test)):
     img = x_test[i]
-    img = cv2.resize(img, (128, 128))
+    img = cv2.resize(img, (128, 128))  # changing the size of images to (128, 128)
     img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     x_test[i] = img
 
 x_train = np.array(x_train)
 x_test = np.array(x_test)
 
+# Normalizing the images
 x_train = x_train/255.0
 x_test = x_test/255.0
 
+# Encoding the string labels
 label_encoder = LabelEncoder()
 y_train = label_encoder.fit_transform(y_train)
 print(y_train.shape)
@@ -177,13 +167,13 @@ label_encoder = LabelEncoder()
 y_test = label_encoder.fit_transform(y_test)
 print(y_test.shape)
 
-"""### Data Distribution after Augmentation"""
-
+# Data Distribution of Train Set after Augmentation
 unique_train, count = np.unique(y_train, return_counts=True)
 plt.figure(figsize=(20, 10))
 sns.barplot(unique_train, count).set_title("Number of training images per category after augmentation:")
 plt.show()
 
+# Data Distribution of Test Set after Augmentation
 unique_test, count_test = np.unique(y_test, return_counts=True)
 plt.figure(figsize=(20, 10))
 sns.barplot(unique_test, count_test).set_title("Number of test set images per category after augmentation:")
@@ -200,8 +190,7 @@ print(y_train.shape)
 print(x_test.shape)
 print(y_test.shape)
 
-"""### Defining the Model"""
-
+# Defining the Model
 def parkinson_disease_detection_model(input_shape=(128, 128, 1)):
     regularizer = tf.keras.regularizers.l2(0.001)
     model = Sequential()
@@ -235,12 +224,10 @@ def parkinson_disease_detection_model(input_shape=(128, 128, 1)):
 model= parkinson_disease_detection_model(input_shape=(128, 128, 1))
 model.summary()
 
-"""### Training the Model"""
-
+# Training the Model
 hist = model.fit(x_train, y_train, batch_size=128, epochs=70, validation_data=(x_test, y_test))
 
-"""### Loss and Accuracy Plot"""
-
+# Loss and Accuracy Plot
 figure = plt.figure(figsize=(10, 10))
 plt.plot(hist.history['accuracy'], label='Train_accuracy')
 plt.plot(hist.history['val_accuracy'], label='Test_accuracy')
@@ -259,26 +246,22 @@ plt.ylabel('Loss')
 plt.legend(loc="upper left")
 plt.show()
 
-"""### Classification Report"""
-
+# Classification Report
 ypred = model.predict(x_test)
 ypred = np.argmax(ypred, axis=1)
 y_test_pred = np.argmax(y_test, axis=1)
 print(classification_report(y_test_pred, ypred))
 
-"""### Confusion Matrix"""
-
+# Confusion Matrix
 matrix = confusion_matrix(y_test_pred, ypred)
 df_cm = pd.DataFrame(matrix, index=[0, 1], columns=[0, 1])
 figure = plt.figure(figsize=(5, 5))
 sns.heatmap(df_cm, annot=True, fmt='d')
 
-"""### Saving the Model"""
-
+# Saving the Model
 model.save('parkinson_disease_detection.h5')
 
-"""### Testing Model on Images"""
-
+# Testing Model on Images
 labels = ['Healthy', 'Parkinson']
 image_healthy = cv2.imread('dataset/test_image_healthy.png')
 image_parkinson = cv2.imread('dataset/test_image_parkinson.png')
